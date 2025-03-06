@@ -23,7 +23,7 @@
         <div class="video-container">
           <video
             ref="video_player"
-            :src="`/assets/videos/${current_exercise?.id}.mp4`"
+            :src="`./assets/videos/${current_exercise?.id}.mp4`"
             :loop="!current_exercise?.own_audio"
             playsinline
             :autoplay="!is_paused"
@@ -99,8 +99,8 @@ const show_exit_confirm = ref(false);
 // Audio elements
 const exercise_audio = new Audio();
 const next_up_audio = new Audio();
-const switch_audio = new Audio('/assets/switch.mp3');
-const beep_audio = new Audio('/assets/beep.mp3');
+const switch_audio = new Audio('./assets/switch.mp3');
+const beep_audio = new Audio('./assets/beep.mp3');
 
 // Timer reference
 let timer_id = null;
@@ -169,7 +169,7 @@ const prepare_for_exercise = () => {
   if (current_exercise.value && 
       current_exercise.value.id !== 0 && 
       current_exercise.value.id !== 1) {
-    next_up_audio.src = `/assets/nextup/${current_exercise.value.id}.mp3`;
+    next_up_audio.src = `./assets/nextup/${current_exercise.value.id}.mp3`;
     next_up_audio.play().catch(err => console.error("Audio error:", err));
   }
   
@@ -183,7 +183,7 @@ const start_exercise = () => {
   
   // Play exercise name audio if not using own audio
   if (current_exercise.value && !current_exercise.value.own_audio) {
-    exercise_audio.src = `/assets/prompt/${current_exercise.value.id}.mp3`;
+    exercise_audio.src = `./assets/prompt/${current_exercise.value.id}.mp3`;
     exercise_audio.play().catch(err => console.error("Audio error:", err));
   }
   
