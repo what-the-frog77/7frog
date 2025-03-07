@@ -100,6 +100,7 @@ const exercise_audio = new Audio();
 const next_up_audio = new Audio();
 const switch_audio = new Audio('./assets/switch.mp3');
 const beep_audio = new Audio('./assets/beep.mp3');
+let last_audio = null;
 
 // Timer reference
 let timer_id = null;
@@ -160,6 +161,13 @@ const start_workout = () => {
   prepare_for_exercise();
 };
 
+const play_audio = (audio_element, src) => {
+  if (src) audio_element.src = src;
+  audio_element.currentTime = 0;
+  audio_element.play().catch(err => console.error("Audio error:", err));
+  last_audio = audio_element;
+};
+
 const prepare_for_exercise = () => {
   is_preparing.value = true;
   countdown.value = store.pause_length;
@@ -168,8 +176,7 @@ const prepare_for_exercise = () => {
   if (current_exercise.value && 
       current_exercise.value.id !== 0 && 
       current_exercise.value.id !== 1) {
-    next_up_audio.src = `./assets/nextup/${current_exercise.value.id}.mp3`;
-    next_up_audio.play().catch(err => console.error("Audio error:", err));
+    play_audio(next_up_audio, `./assets/nextup/${current_exercise.value.id}.mp3`);
   }
   
   start_timer();
@@ -179,11 +186,14 @@ const start_exercise = () => {
   is_preparing.value = false;
   countdown.value = exercise_duration.value;
   show_switch.value = false;
+
+  // in case we jumped past preparing
+  next_up_audio.pause();
+  beep_audio.pause();
   
   // Play exercise name audio if not using own audio
   if (current_exercise.value && !current_exercise.value.own_audio) {
-    exercise_audio.src = `./assets/prompt/${current_exercise.value.id}.mp3`;
-    exercise_audio.play().catch(err => console.error("Audio error:", err));
+    play_audio(exercise_audio, `./assets/prompt/${current_exercise.value.id}.mp3`);
   }
   
   // Make sure video is playing if not paused
@@ -226,7 +236,7 @@ const start_timer = () => {
       
       // Play beep 3 seconds before end
       if (countdown.value === 3) {
-        beep_audio.play().catch(err => console.error("Audio error:", err));
+	play_audio(beep_audio, null);
       }
       
       // Check if we need to announce "switch sides"
@@ -234,7 +244,7 @@ const start_timer = () => {
           current_exercise.value?.switch && 
           countdown.value === Math.floor(exercise_duration.value / 2)) {
         show_switch.value = true;
-        switch_audio.play().catch(err => console.error("Audio error:", err));
+	play_audio(switch_audio, null);
         
         // Hide the switch notification after 3 seconds
         setTimeout(() => {
@@ -258,9 +268,11 @@ const set_pause = (val) => {
   if (is_paused.value) {
     clear_timer();
     if (video_player.value) video_player.value.pause();
+    if (last_audio && !last_audio.ended) last_audio.pause();
   } else {
     start_timer();
     if (video_player.value) video_player.value.play();
+    if (last_audio && !last_audio.ended) last_audio.play();
   }
 };
 

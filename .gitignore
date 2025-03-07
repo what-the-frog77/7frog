@@ -1,5 +1,6 @@
 # Logs
 LOG
+00GIT
 logs
 *.log
 npm-debug.log*
