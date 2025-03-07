@@ -2,7 +2,7 @@
   <div class="workout-player">
     <template v-if="!is_completed">
       <!-- "Get Ready" countdown screen -->
-      <div v-if="is_preparing" class="prepare-screen">
+      <div v-if="is_preparing" class="prepare-screen" @click="toggle_pause">
         <h2>Get Ready!</h2>
         <div class="big-counter">{{ countdown }}</div>
         <h3>Next up: {{ current_exercise?.name }}</h3>
@@ -30,19 +30,18 @@
 	    @click="toggle_pause"
           ></video>
           
-          <!-- Pause overlay -->
-          <div v-if="is_paused" class="pause-overlay" @click="toggle_pause">
-            <div class="pause-icon">II</div>
-          </div>
         </div>
+      </div>
 
-	<div class="controls">
-	  <button @click="confirm_exit" class="exit-button">Exit</button>
-	  <button @click="toggle_pause" class="pause-button">
-	    {{ is_paused ? 'Resume' : 'Pause' }}
-	  </button>
-	  <button @click="skip_exercise" class="skip-button">Skip</button>
-	</div>
+      <!-- Pause overlay -->
+      <div v-if="is_paused" class="pause-overlay" @click="toggle_pause">
+	<div class="pause-icon">II</div>
+      </div>
+
+      <div class="controls">
+	<button @click="confirm_exit" class="exit-button">Exit</button>
+	<button @click="toggle_pause" class="pause-button">Pause</button>
+	<button @click="skip_exercise" class="skip-button">Skip</button>
       </div>
     </template>
     
@@ -330,8 +329,9 @@ watch(video_player, (new_player) => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
+  /* align-items: center; */
   text-align: center;
+  background: #fff;
 }
 
 .big-counter {
@@ -424,6 +424,8 @@ video {
   padding: 15px;
   background-color: #fff;
   border-top: 1px solid #ddd;
+  /* border-bottom: 1px solid #ddd;
+  margin-bottom:48px; */
 }
 
 .controls button {
