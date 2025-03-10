@@ -15,7 +15,7 @@ const routes = [
 
 const router = createRouter({
   history: createWebHashHistory(),
-  routes
+  routes,
 });
 
 const app = createApp(App);

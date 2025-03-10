@@ -90,7 +90,7 @@ const save_settings = () => {
 
 // Navigation
 const go_back = () => {
-  router.replace('/7frog');
+  router.back();
 };
 </script>
 
@@ -134,7 +134,7 @@ input {
 
 input:focus {
   outline: none;
-  border-color: #4CAF50;
+  border-color: var(--main);
 }
 
 .error-message {
@@ -145,9 +145,9 @@ input:focus {
 .cancel-button {
   font-size: 1rem;
   margin-top: 10px;
-  border: 1px solid #4CAF50;
+  border: 1px solid var(--main);
   background: #fff;
-  color: #4CAF50;
+  color: var(--main);
 }
 
 .save-button {

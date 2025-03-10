@@ -1,6 +1,7 @@
 # Logs
 LOG
 00GIT
+perso
 logs
 *.log
 npm-debug.log*

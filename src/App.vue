@@ -1,9 +1,3 @@
-<template>
-  <div class="app-container">
-    <router-view />
-  </div>
-</template>
-
 <script setup>
 import { reactive, provide, onMounted } from 'vue';
 
@@ -29,7 +23,6 @@ const store = reactive({
     this.last_played = this.last_played.filter(x => x !== id);
     this.last_played.unshift(id);
     this.save();
-    // console.log("NOW PLAYED: ", this.last_played);
   },
 });
 
@@ -52,11 +45,21 @@ onMounted(() => {
 provide('store', store);
 </script>
 
+<template>
+  <div class="app-container">
+    <router-view />
+  </div>
+</template>
+
 <style>
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+:root {
+  --main: #4CAF50;
 }
 
 body {
@@ -76,7 +79,7 @@ body {
 }
 
 button {
-  background-color: #4CAF50;
+  background-color: var(--main);
   color: white;
   border: none;
   padding: 8px 4px;

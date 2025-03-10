@@ -1,46 +1,3 @@
-<template>
-  <div class="circuit-list">
-    <div style="float:right">
-      <button @click="go_to_settings" class="settings-button">⚙️</button>
-    </div>
-
-    <h1>
-      <img src="/assets/frog.png" style="width:48px; height:48px; vertical-align:-18%">
-      7FROG
-    </h1>
- 
-    <div class="toggle-switch">
-      <span>Warm-up &amp; Cool-down</span>
-      <label class="switch">
-        <input type="checkbox" v-model="store.warmups">
-        <span class="slider round"></span>
-      </label>
-    </div>
-    
-    <div class="circuits">
-      <template
-        v-for="circuit in show_circuits" 
-        :key="circuit.id" 
-      >
-	<div 
-	  class="circuit-card"
-	  @click="start_workout(circuit.id)"
-	>
-	  <h2>{{ circuit.name }}</h2>
-	  <p class="difficulty">{{ circuit.difficulty }}</p>
-	  <p class="exercise-count">{{ circuit.exercises.length }} exercises, approx. {{ calculate_duration(circuit) }} minutes</p>
-	</div>
-      </template>
-    </div>
-
-    <div v-if="!show_all" class="show-all">
-      <span @click="show_all = true" class="ql">Show all</span>
-    </div>
-
-
-  </div>
-</template>
-
 <script setup>
 import { inject, watch, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
@@ -98,11 +55,11 @@ const calculate_duration = (circuit) => {
 
 const start_workout = (circuit_id) => {
   store.played(circuit_id);
-  router.replace(`/workout/${circuit_id}`);
+  router.push(`/workout/${circuit_id}`);
 };
 
 const go_to_settings = () => {
-  router.replace('/settings');
+  router.push('/settings');
 };
 
 // save settings on warmups change
@@ -111,6 +68,47 @@ watch(
   () => store.save()
 );
 </script>
+
+<template>
+  <div class="circuit-list">
+    <div style="float:right">
+      <button @click="go_to_settings" class="settings-button">⚙️</button>
+    </div>
+
+    <h1>
+      <img src="/assets/frog.png" style="width:48px; height:48px; vertical-align:-18%">
+      7FROG
+    </h1>
+ 
+    <div class="toggle-switch">
+      <span>Warm-up &amp; Cool-down</span>
+      <label class="switch">
+        <input type="checkbox" v-model="store.warmups">
+        <span class="slider round"></span>
+      </label>
+    </div>
+    
+    <div class="circuits">
+      <template
+        v-for="circuit in show_circuits" 
+        :key="circuit.id" 
+      >
+	<div 
+	  class="circuit-card"
+	  @click="start_workout(circuit.id)"
+	>
+	  <h2>{{ circuit.name }}</h2>
+	  <p class="difficulty">{{ circuit.difficulty }}</p>
+	  <p class="exercise-count">{{ circuit.exercises.length }} exercises, approx. {{ calculate_duration(circuit) }} minutes</p>
+	</div>
+      </template>
+    </div>
+
+    <div v-if="!show_all" class="show-all">
+      <span @click="show_all = true" class="ql">Show all</span>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .circuit-list {
@@ -147,7 +145,7 @@ h1 {
 .difficulty {
   /* display: inline-block; */
   float: right;
-  background-color: #4CAF50;
+  background-color: var(--main);
   color: white;
   padding: 3px 8px;
   border-radius: 4px;
@@ -198,7 +196,7 @@ h1 {
 }
 
 input:checked + .slider {
-  background-color: #4CAF50;
+  background-color: var(--main);
 }
 
 input:checked + .slider:before {
@@ -225,6 +223,7 @@ input:checked + .slider:before {
   cursor: pointer;
   font-size:20px;
   margin:0;
+  filter: grayscale(100%);
 }
 
 .settings-button:hover {
@@ -248,6 +247,6 @@ h2 {
   line-height:48px;
 }
 
-.ql { color:#36f; text-decoration:none; cursor:pointer }
+.ql { color:#666; text-decoration:none; cursor:pointer }
 </style>
 

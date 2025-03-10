@@ -1,70 +1,3 @@
-<template>
-  <div class="workout-player">
-    <template v-if="!is_completed">
-      <!-- "Get Ready" countdown screen -->
-      <div v-if="is_preparing" class="prepare-screen" @click="toggle_pause">
-        <h2>Get Ready!</h2>
-        <div class="big-counter">{{ countdown }}</div>
-        <h3>Next up: {{ current_exercise?.name }}</h3>
-      </div>
-      
-      <!-- Active exercise screen -->
-      <div v-else class="exercise-screen">
-        <div class="exercise-info">
-          <h2>{{ current_exercise?.name }}</h2>
-          <div class="timer">{{ format_time(countdown) }}</div>
-          
-          <!-- Switch sides notification -->
-          <div v-if="show_switch" class="switch-notification">
-            Switch Sides!
-          </div>
-        </div>
-        
-        <div class="video-container">
-          <video
-            ref="video_player"
-            :src="`./assets/videos/${current_exercise?.id}.mp4`"
-            :loop="!current_exercise?.own_audio"
-            playsinline
-            :autoplay="!is_paused"
-	    @click="toggle_pause"
-          ></video>
-          
-        </div>
-      </div>
-
-      <!-- Pause overlay -->
-      <div v-if="is_paused" class="pause-overlay" @click="toggle_pause">
-	<div class="pause-icon">II</div>
-      </div>
-
-      <div class="controls">
-	<button @click="confirm_exit" class="exit-button">Exit</button>
-	<button @click="toggle_pause" class="pause-button">Pause</button>
-	<button @click="skip_exercise" class="skip-button">Skip</button>
-      </div>
-    </template>
-    
-    <!-- Workout completed screen -->
-    <div v-else class="completion-screen">
-      <h2>Workout Complete!</h2>
-      <p>Great job!</p>
-      <button @click="go_back" class="primary-button">Back to Workouts</button>
-    </div>
-  </div>
-
-  <div v-if="show_exit_confirm" class="overlay">
-    <div class="confirm-dialog">
-      <h3>Exit Workout?</h3>
-      <p>Your progress will be lost.</p>
-      <div class="dialog-buttons">
-	<button @click="show_exit_confirm = false; set_pause(false)" class="cancel-button">Cancel</button>
-	<button @click="go_back" class="confirm-button">Exit</button>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script>
 export default {
   // disable automatic application of attributes like id, avoid warnings
@@ -96,11 +29,7 @@ const video_player = ref(null);
 const show_exit_confirm = ref(false);
 
 // Audio elements
-const exercise_audio = new Audio();
-const next_up_audio = new Audio();
-const switch_audio = new Audio('./assets/switch.mp3');
-const beep_audio = new Audio('./assets/beep.mp3');
-let last_audio = null;
+const audio_player = new Audio();
 
 // Timer reference
 let timer_id = null;
@@ -161,22 +90,22 @@ const start_workout = () => {
   prepare_for_exercise();
 };
 
-const play_audio = (audio_element, src) => {
-  if (src) audio_element.src = src;
-  audio_element.currentTime = 0;
-  audio_element.play().catch(err => console.error("Audio error:", err));
-  last_audio = audio_element;
+const play_audio = (src) => {
+  audio_player.src = src;
+  audio_player.currentTime = 0;
+  audio_player.play().catch(err => console.error("Audio error:", err));
 };
 
 const prepare_for_exercise = () => {
   is_preparing.value = true;
   countdown.value = store.pause_length;
+  if (audio_player.src) audio_player.pause();
   
   // Play "next up" audio if not warm-up or cool-down
   if (current_exercise.value && 
       current_exercise.value.id !== 0 && 
       current_exercise.value.id !== 1) {
-    play_audio(next_up_audio, `./assets/nextup/${current_exercise.value.id}.mp3`);
+    play_audio(`./assets/nextup/${current_exercise.value.id}.mp3`);
   }
   
   start_timer();
@@ -186,14 +115,11 @@ const start_exercise = () => {
   is_preparing.value = false;
   countdown.value = exercise_duration.value;
   show_switch.value = false;
+  if (audio_player.src) audio_player.pause();
 
-  // in case we jumped past preparing
-  next_up_audio.pause();
-  beep_audio.pause();
-  
   // Play exercise name audio if not using own audio
   if (current_exercise.value && !current_exercise.value.own_audio) {
-    play_audio(exercise_audio, `./assets/prompt/${current_exercise.value.id}.mp3`);
+    play_audio(`./assets/prompt/${current_exercise.value.id}.mp3`);
   }
   
   // Make sure video is playing if not paused
@@ -236,7 +162,7 @@ const start_timer = () => {
       
       // Play beep 3 seconds before end
       if (countdown.value === 3) {
-	play_audio(beep_audio, null);
+	play_audio('./assets/beep.mp3');
       }
       
       // Check if we need to announce "switch sides"
@@ -244,7 +170,7 @@ const start_timer = () => {
           current_exercise.value?.switch && 
           countdown.value === Math.floor(exercise_duration.value / 2)) {
         show_switch.value = true;
-	play_audio(switch_audio, null);
+	play_audio('./assets/switch.mp3');
         
         // Hide the switch notification after 3 seconds
         setTimeout(() => {
@@ -263,16 +189,18 @@ const clear_timer = () => {
 };
 
 const set_pause = (val) => {
-  is_paused.value = !!val;
+  val = !!val;
+  if (is_paused.value === val) return;
+  is_paused.value = val;
 
-  if (is_paused.value) {
+  if (val) {
     clear_timer();
     if (video_player.value) video_player.value.pause();
-    if (last_audio && !last_audio.ended) last_audio.pause();
+    if (audio_player.src && !audio_player.ended) audio_player.pause();
   } else {
     start_timer();
     if (video_player.value) video_player.value.play();
-    if (last_audio && !last_audio.ended) last_audio.play();
+    if (audio_player.src && !audio_player.ended) audio_player.play();
   }
 };
 
@@ -295,7 +223,7 @@ const confirm_exit = () => {
 
 const go_back = () => {
   clear_timer();
-  router.replace('/7frog');
+  router.back();
 };
 
 const format_time = (seconds) => {
@@ -313,19 +241,77 @@ onMounted(() => {
 onBeforeUnmount(() => {
   // Clean up timers and audio
   clear_timer();
-  exercise_audio.pause();
-  next_up_audio.pause();
-  switch_audio.pause();
-  beep_audio.pause();
-});
-
-// Watch for video player reference
-watch(video_player, (new_player) => {
-  if (new_player && !is_paused.value && !is_preparing.value) {
-    new_player.play().catch(err => console.error("Video error:", err));
-  }
+  if (audio_player.src) audio_player.pause();
 });
 </script>
+
+<template>
+  <div class="workout-player">
+    <template v-if="!is_completed">
+      <!-- "Get Ready" countdown screen -->
+      <div v-if="is_preparing" class="prepare-screen" @click="toggle_pause">
+        <h2>Get Ready!</h2>
+        <div class="big-counter">{{ countdown }}</div>
+        <h3>Next up: {{ current_exercise?.name }}</h3>
+      </div>
+      
+      <!-- Active exercise screen -->
+      <div v-else class="exercise-screen">
+        <div class="exercise-info">
+          <h2>{{ current_exercise?.name }}</h2>
+          <div class="timer">{{ format_time(countdown) }}</div>
+          
+          <!-- Switch sides notification -->
+          <div v-if="show_switch" class="switch-notification">
+            Switch Sides!
+          </div>
+        </div>
+        
+        <div class="video-container">
+          <video
+            ref="video_player"
+            :src="`./assets/videos/${current_exercise?.id}.mp4`"
+            :loop="!current_exercise?.own_audio"
+            playsinline
+            :autoplay="!is_paused"
+	    @click="toggle_pause"
+	    poster="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
+          ></video>
+          
+        </div>
+      </div>
+
+      <!-- Pause overlay -->
+      <div v-if="is_paused" class="pause-overlay" @click="toggle_pause">
+	<div class="pause-icon">II</div>
+      </div>
+
+      <div class="controls">
+	<button @click="confirm_exit" class="exit-button">Exit</button>
+	<button @click="toggle_pause" class="pause-button">Pause</button>
+	<button @click="skip_exercise" class="skip-button">Skip</button>
+      </div>
+    </template>
+    
+    <!-- Workout completed screen -->
+    <div v-else class="completion-screen">
+      <h2>Workout Complete!</h2>
+      <p>Great job!</p>
+      <button @click="go_back" class="primary-button">Back to Workouts</button>
+    </div>
+  </div>
+
+  <div v-if="show_exit_confirm" class="overlay">
+    <div class="confirm-dialog">
+      <h3>Exit Workout?</h3>
+      <p>Your progress will be lost.</p>
+      <div class="dialog-buttons">
+	<button @click="show_exit_confirm = false; set_pause(false)" class="cancel-button">Cancel</button>
+	<button @click="go_back" class="confirm-button">Exit</button>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .workout-player {
@@ -350,7 +336,7 @@ watch(video_player, (new_player) => {
   font-size: 6rem;
   font-weight: bold;
   margin: 20px 0;
-  color: #4CAF50;
+  color: var(--main);
 }
 
 /* Exercise screen */
@@ -371,7 +357,7 @@ watch(video_player, (new_player) => {
   font-size: 2.8rem;
   font-weight: bold;
   margin-top: 4px;
-  color: #4CAF50;
+  color: var(--main);
 }
 
 h2 {
@@ -380,10 +366,9 @@ h2 {
 
 .switch-notification {
   position: absolute;
-  top: 50%;
+  top: 200px;
   left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: rgba(255, 87, 34, 0.9);
+  background-color: var(--main);
   color: white;
   padding: 10px 20px;
   border-radius: 8px;
@@ -451,13 +436,13 @@ video {
 }
 
 .pause-button {
-  background-color: #4CAF50;
+  background-color: var(--main);
 }
 
 .skip-button {
-  border: 1px solid #4CAF50;
+  border: 1px solid var(--main);
   background: #fff;
-  color: #4CAF50;
+  color: var(--main);
 }
 
 /* Completion screen */
@@ -522,7 +507,7 @@ video {
 }
 
 .confirm-button {
-  background-color: #f44336;
+  background-color: var(--main);
 }
 </style>
 
